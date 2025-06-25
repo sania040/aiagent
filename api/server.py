@@ -1,4 +1,3 @@
-# api/server.py
 import os
 from dotenv import load_dotenv
 from fastapi import FastAPI, WebSocket, Request
@@ -17,7 +16,7 @@ TWILIO_ACCOUNT_SID = os.getenv("TWILIO_ACCOUNT_SID")
 TWILIO_AUTH_TOKEN = os.getenv("TWILIO_AUTH_TOKEN")
 TWILIO_PHONE_NUMBER = os.getenv("TWILIO_PHONE_NUMBER")
 CALL_TO_NUMBER = os.getenv("CALL_TO_NUMBER")  # set in .env
-NGROK_URL = os.getenv("NGROK_URL")  # set in .env
+NGROK_URL = "https://bbb7-2a09-bac5-503b-2723-00-3e6-40.ngrok-free.app"
 client = Client(TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN)
 
 current_call = {"sid": None, "status": None}
@@ -26,11 +25,13 @@ current_call = {"sid": None, "status": None}
 def make_call():
     print("[CALL] Initiating outbound call...")
     try:
+        # Use dynamic NGROK_URL instead of hardcoded URL
+        ngrok_url = NGROK_URL.rstrip('/')
         call = client.calls.create(
             to=CALL_TO_NUMBER,
             from_=TWILIO_PHONE_NUMBER,
-            url=f"https://9ce0-2a09-bac1-5b20-48-00-3c4-45.ngrok-free.app/voice",
-            status_callback=f"https://9ce0-2a09-bac1-5b20-48-00-3c4-45.ngrok-free.app/status",
+            url=f"{ngrok_url}/voice",
+            status_callback=f"{ngrok_url}/status",
             status_callback_event=["initiated", "ringing", "answered", "completed"]
         )
         print(f"[CALL] Call initiated. SID: {call.sid}")
@@ -46,18 +47,41 @@ async def voice_webhook(_: Request):
     print("[WEBHOOK] Twilio voice webhook hit.")
     response = ET.Element("Response")
 
+    # Give initial greeting first
+    say = ET.SubElement(response, "Say", voice="Polly.Joanna")
+    say.text = "Hello, this is your AI assistant. I'm connecting you now."
+    
+    # Start streaming audio to our WebSocket - fix the URL format
     start = ET.SubElement(response, "Start")
-    ET.SubElement(start, "Stream", url=f"wss://{NGROK_URL}/media")
-
-    say = ET.SubElement(response, "Say")
-    say.text = "Hello, this is your legal AI assistant. How can I help you today?"
-
-    gather = ET.SubElement(response, "Gather", input="speech", timeout="20", action="/fallback", method="POST")
-    gather.text = ""
-
+    # Use the dynamic NGROK_URL variable instead of hardcoded URL
+    ws_url = NGROK_URL.replace('https://', '').replace('http://', '')
+    stream = ET.SubElement(start, "Stream", url=f"wss://{ws_url}/media")
+    
+    # Simplified approach - just start recording and let WebSocket handle everything
+    say2 = ET.SubElement(response, "Say", voice="Polly.Joanna")
+    say2.text = "Please speak now, I'm listening."
+    
+    # Keep the call open with a long pause while WebSocket processes
+    pause = ET.SubElement(response, "Pause", length="300")  # 5 minutes
+    
     twiml = ET.tostring(response, encoding="unicode")
     print("[WEBHOOK] Generated TwiML:", twiml)
 
+    return Response(content=twiml, media_type="text/xml")
+
+@app.post("/continue")
+async def continue_call(_: Request):
+    print("[CONTINUE] Continuing call session...")
+    response = ET.Element("Response")
+    
+    # Just continue listening
+    say = ET.SubElement(response, "Say", voice="Polly.Joanna")
+    say.text = "I'm still here. Please continue speaking."
+    
+    # Keep the call open
+    pause = ET.SubElement(response, "Pause", length="300")
+    
+    twiml = ET.tostring(response, encoding="unicode")
     return Response(content=twiml, media_type="text/xml")
 
 
@@ -90,6 +114,13 @@ async def call_status(request: Request):
              print(f"Call {current_call['status']} ended. Retry or cleanup.")
 
     return {"status": status, "sid": sid}
+
+
+@app.post("/conference-status")
+async def conference_status(request: Request):
+    form = await request.form()
+    print(f"[CONFERENCE] Status update: {dict(form)}")
+    return {}
 
 
 def retry_call():

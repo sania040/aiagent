@@ -15,23 +15,37 @@ class SpeechToText:
     def transcribe_audio(self, audio_file_path):
         """Transcribes audio file to text using OpenAI's Whisper model"""
         print(f"[STT] Starting transcription for: {audio_file_path}")
+        
+        # Check if file exists and has content
+        if not os.path.exists(audio_file_path):
+            print(f"[STT] Audio file not found: {audio_file_path}")
+            return None
+            
+        file_size = os.path.getsize(audio_file_path)
+        if file_size < 1000:  # Less than 1KB
+            print(f"[STT] Audio file too small: {file_size} bytes")
+            return None
+            
         try:
             with open(audio_file_path, "rb") as audio_file:
                 print("[STT] Audio file opened, sending to OpenAI Whisper API...")
-                # transcript = openai.Audio.transcribe("whisper-1", audio_file)
+                
                 transcript = openai.audio.transcriptions.create(
-                    # model="gpt-4o-transcribe",
                     model="whisper-1",
                     file=audio_file,
+                    language="en"  # Specify language for better accuracy
                 )
                 print(f"[STT] Raw transcript response: {transcript}")
+                
             # Always use .text for the result
-            if hasattr(transcript, "text"):
-                print("[STT] Transcription successful.")
-                return transcript.text
+            if hasattr(transcript, "text") and transcript.text.strip():
+                result = transcript.text.strip()
+                print(f"[STT] Transcription successful: '{result}'")
+                return result
             else:
-                print("[STT] Unexpected transcript format.")
+                print("[STT] Empty transcription result.")
                 return None
+                
         except Exception as e:
             print(f"[STT] Error transcribing audio: {e}")
             return None
