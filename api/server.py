@@ -106,8 +106,8 @@ async def call_status(request: Request):
     form = await request.form()
     status = form.get("CallStatus")
     sid = form.get("CallSid")
-    # Modify the print statement to show only status and sid
     print(f"[CALL STATUS] SID: {sid}, Status: {status}")
+    print(f"[CALL STATUS] Full details: {dict(form)}")
     if sid == current_call["sid"]:
         current_call["status"] = status
         if status in {"busy", "failed", "no-answer"}:

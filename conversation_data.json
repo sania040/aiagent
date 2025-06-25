@@ -364,6 +364,35 @@
         "assistant_text": "Hello! Of course, I'm here to help. What do you need assistance with today?",
         "extracted_info": {}
       }
+    ],
+    "20250625_221521": [
+      {
+        "timestamp": "2025-06-25T22:16:23.914299",
+        "user_text": "Thank you.",
+        "assistant_text": "You\u2019re very welcome! If you need anything else, just let me know. Have a great day!",
+        "extracted_info": {}
+      }
+    ],
+    "20250625_221902": [
+      {
+        "timestamp": "2025-06-25T22:19:52.885076",
+        "user_text": "Hello, can I get your name please? I need to book an apartment with a free meal and package.",
+        "assistant_text": "Hello! I'm your virtual assistant here to help. Let's get you booked into an apartment with a free meal and package. Could you please let me know your preferences, such as location or any other special requirements?",
+        "extracted_info": {}
+      }
+    ],
+    "20250625_223254": [
+      {
+        "timestamp": "2025-06-25T22:34:00.586225",
+        "user_text": "Hello, can I get your name please? I need to book an appointment for tomorrow's tour.",
+        "assistant_text": "Hello! My name is Alex. I'd be delighted to help you book that appointment for tomorrow's tour. What time were you thinking of joining us?",
+        "extracted_info": {
+          "important_points": [
+            "I need to book an appointment for tomorrow's tour.",
+            "I'd be delighted to help you book that appointment for tomorrow's tour."
+          ]
+        }
+      }
     ]
   }
 }

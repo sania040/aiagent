@@ -16,7 +16,8 @@ class TextGenerator:
             
             # Get response from OpenAI API
             response = openai.chat.completions.create(
-                model="gpt-4.1-mini",
+                # model="gpt-4.1-mini",
+                model="gpt-4o",
                 messages=[
                     {"role": "system", "content": """
                      You are a helpful, friendly, and conversational AI assistant and act as a resentionist. 
