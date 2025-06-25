@@ -321,6 +321,49 @@
         "assistant_text": "Hi there! I'm your virtual receptionist, here to help you out. How can I assist you today?",
         "extracted_info": {}
       }
+    ],
+    "20250625_184455": [
+      {
+        "timestamp": "2025-06-25T18:47:01.846049",
+        "user_text": "Hello, hello, hello, are you listening to me? Am I, uh, am I, uh, am I arguable?",
+        "assistant_text": "Hi there! I\u2019m definitely listening. You sound like you\u2019ve got something on your mind\u2014how can I help you today?",
+        "extracted_info": {}
+      }
+    ],
+    "20250625_194222": [
+      {
+        "timestamp": "2025-06-25T19:43:58.940178",
+        "user_text": "Hello, can I get your name please?",
+        "assistant_text": "Hi there! I\u2019m your friendly receptionist assistant. How can I help you today?",
+        "extracted_info": {}
+      },
+      {
+        "timestamp": "2025-06-25T21:44:34.378929",
+        "user_text": "Hello, can I get your name please? I want to book an appointment for my tomorrow's visit.",
+        "assistant_text": "Of course! You can call me Ava. I\u2019d be happy to help you with your appointment for tomorrow. What time were you thinking?",
+        "extracted_info": {
+          "important_points": [
+            "I want to book an appointment for my tomorrow's visit.",
+            "I\u2019d be happy to help you with your appointment for tomorrow."
+          ]
+        }
+      }
+    ],
+    "20250625_215201": [
+      {
+        "timestamp": "2025-06-25T21:53:13.586343",
+        "user_text": "Hello, can I get your name please, I need to go to the embarkment first.",
+        "assistant_text": "Hello! I'm your friendly AI receptionist. If you need help with directions to the embarkment or anything else, just let me know! How can I assist you today?",
+        "extracted_info": {}
+      }
+    ],
+    "20250625_220653": [
+      {
+        "timestamp": "2025-06-25T22:07:58.190865",
+        "user_text": "Hello, can I get to you briefly?",
+        "assistant_text": "Hello! Of course, I'm here to help. What do you need assistance with today?",
+        "extracted_info": {}
+      }
     ]
   }
 }
