@@ -283,6 +283,44 @@
         "assistant_text": "You're very welcome! If you need anything else or have any questions, just let me know. I'm here to help!",
         "extracted_info": {}
       }
+    ],
+    "20250625_135201": [
+      {
+        "timestamp": "2025-06-25T13:53:48.974991",
+        "user_text": "Undertitled by Brother",
+        "assistant_text": "Hi! Are you asking about the movie \"Undertitled\" by Brother, or do you mean something else? Just want to make sure I got you right so I can help!",
+        "extracted_info": {}
+      }
+    ],
+    "20250625_135908": [
+      {
+        "timestamp": "2025-06-25T14:01:44.026490",
+        "user_text": "You can turn the link off now.",
+        "assistant_text": "Sure thing! I've turned the link off for you. Is there anything else you'd like me to help with?",
+        "extracted_info": {}
+      }
+    ],
+    "20250625_140547": [
+      {
+        "timestamp": "2025-06-25T14:06:45.726903",
+        "user_text": "Thank you.",
+        "assistant_text": "You\u2019re very welcome! If there\u2019s anything else you need or any questions, just let me know. I\u2019m here to help!",
+        "extracted_info": {}
+      }
+    ],
+    "20250625_141422": [
+      {
+        "timestamp": "2025-06-25T14:16:30.680914",
+        "user_text": "Hello, can I get your name please? Hello? Hello, hello?",
+        "assistant_text": "Hi there! Sorry for the wait. I\u2019m Alex, your friendly receptionist. How can I help you today?",
+        "extracted_info": {}
+      },
+      {
+        "timestamp": "2025-06-25T14:16:31.633769",
+        "user_text": "you",
+        "assistant_text": "Hi there! I'm your virtual receptionist, here to help you out. How can I assist you today?",
+        "extracted_info": {}
+      }
     ]
   }
 }

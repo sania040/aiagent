@@ -47,19 +47,30 @@ async def voice_webhook(_: Request):
     response = ET.Element("Response")
 
     start = ET.SubElement(response, "Start")
-    ET.SubElement(start, "Stream", url=f"wss://9ce0-2a09-bac1-5b20-48-00-3c4-45.ngrok-free.app/media")
+    ET.SubElement(start, "Stream", url=f"wss://{NGROK_URL}/media")
 
     say = ET.SubElement(response, "Say")
     say.text = "Hello, this is your legal AI assistant. How can I help you today?"
 
-    # # 👇 Instead of Pause, use Gather to wait for speech
-    gather = ET.SubElement(response, "Gather", input="speech", timeout="20")
+    gather = ET.SubElement(response, "Gather", input="speech", timeout="20", action="/fallback", method="POST")
     gather.text = ""
 
     twiml = ET.tostring(response, encoding="unicode")
     print("[WEBHOOK] Generated TwiML:", twiml)
 
     return Response(content=twiml, media_type="text/xml")
+
+
+@app.post("/fallback")
+async def fallback(_: Request):
+    print("[FALLBACK] No speech detected. Sending polite message.")
+    response = ET.Element("Response")
+    say = ET.SubElement(response, "Say")
+    say.text = "Sorry, I didn't hear anything. Please call again when you're ready."
+    hangup = ET.SubElement(response, "Hangup")
+    twiml = ET.tostring(response, encoding="unicode")
+    return Response(content=twiml, media_type="text/xml")
+
 
 @app.websocket("/media")
 async def media_ws(websocket: WebSocket):
@@ -71,12 +82,13 @@ async def call_status(request: Request):
     form = await request.form()
     status = form.get("CallStatus")
     sid = form.get("CallSid")
-    print("[CALL STATUS]", dict(form))
+    # Modify the print statement to show only status and sid
+    print(f"[CALL STATUS] SID: {sid}, Status: {status}")
     if sid == current_call["sid"]:
         current_call["status"] = status
         if status in {"busy", "failed", "no-answer"}:
              print(f"Call {current_call['status']} ended. Retry or cleanup.")
-    
+
     return {"status": status, "sid": sid}
 
 
