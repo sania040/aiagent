@@ -189,6 +189,138 @@
         "assistant_text": "\u60a8\u597d\uff01\u8bf7\u95ee\u60a8\u662f\u60f3\u9884\u8ba2\u674e\u751f\u5c45\u7684\u9910\u5385\uff0c\u8fd8\u662f\u9700\u8981\u4e86\u89e3\u674e\u751f\u5c45\u7684\u76f8\u5173\u4fe1\u606f\u5462\uff1f\u6211\u53ef\u4ee5\u5e2e\u60a8\u67e5\u770b\u83dc\u5355\u3001\u9884\u8ba2\u5ea7\u4f4d\uff0c\u6216\u8005\u544a\u8bc9\u60a8\u8425\u4e1a\u65f6\u95f4\u3002\u60a8\u770b\uff1f",
         "extracted_info": {}
       }
+    ],
+    "20250625_002756": [
+      {
+        "timestamp": "2025-06-25T00:28:42.191457",
+        "user_text": "se\u00f1ora",
+        "assistant_text": "\u00a1Hola! \u00bfEn qu\u00e9 puedo ayudarte hoy?",
+        "extracted_info": {}
+      }
+    ],
+    "20250625_003413": [
+      {
+        "timestamp": "2025-06-25T00:34:51.446584",
+        "user_text": "Hi,",
+        "assistant_text": "Hello! Welcome! How can I assist you today?",
+        "extracted_info": {}
+      },
+      {
+        "timestamp": "2025-06-25T00:35:26.067072",
+        "user_text": "\u3084\u3042\u3001",
+        "assistant_text": "\u3084\u3042\uff01\u3053\u3093\u306b\u3061\u306f\u3002\u4eca\u65e5\u306f\u3069\u3093\u306a\u3054\u7528\u4ef6\u3067\u3057\u3087\u3046\u304b\uff1f",
+        "extracted_info": {}
+      }
+    ],
+    "20250625_004946": [
+      {
+        "timestamp": "2025-06-25T00:50:06.264084",
+        "user_text": "\u30d3\u30fc\u3002",
+        "assistant_text": "\u3053\u3093\u306b\u3061\u306f\uff01\u3054\u4e88\u7d04\u3084\u3054\u8cea\u554f\u306a\u3069\u3001\u3069\u3046\u305e\u304a\u6c17\u8efd\u306b\u304a\u8a71\u3057\u304f\u3060\u3055\u3044\u3002\u4eca\u65e5\u306f\u3069\u3093\u306a\u3054\u7528\u4ef6\u3067\u3057\u3087\u3046\uff1f",
+        "extracted_info": {}
+      },
+      {
+        "timestamp": "2025-06-25T00:50:23.114698",
+        "user_text": "\uac00\ub77c\uc549\uc544.",
+        "assistant_text": "\uc548\ub155\ud558\uc138\uc694! \uc5b4\ub5bb\uac8c \ub3c4\uc640\ub4dc\ub9b4\uae4c\uc694? \uc608\uc57d\uc774\ub098 \ubb38\uc758\uc0ac\ud56d\uc774 \uc788\uc73c\uc2dc\uba74 \ud3b8\ud558\uac8c \ub9d0\uc500\ud574 \uc8fc\uc138\uc694.",
+        "extracted_info": {}
+      },
+      {
+        "timestamp": "2025-06-25T00:50:50.647899",
+        "user_text": "\uc624!",
+        "assistant_text": "\uc640, \ubc18\uac00\uc6cc\uc694! \uc624\ub298 \ubb34\uc5c7\uc744 \ub3c4\uc640\ub4dc\ub9b4\uae4c\uc694? \uc5b8\uc81c\ub4e0\uc9c0 \ub9d0\uc500\ud574 \uc8fc\uc138\uc694!",
+        "extracted_info": {}
+      },
+      {
+        "timestamp": "2025-06-25T00:51:54.521391",
+        "user_text": "\u0643\u0644\u0645\u0627",
+        "assistant_text": "\u0645\u0631\u062d\u0628\u0627\u064b! \u0643\u064a\u0641 \u064a\u0645\u0643\u0646\u0646\u064a \u0645\u0633\u0627\u0639\u062f\u062a\u0643 \u0627\u0644\u064a\u0648\u0645\u061f \u0625\u0630\u0627 \u0643\u0646\u062a \u0628\u062d\u0627\u062c\u0629 \u0625\u0644\u0649 \u062d\u062c\u0632 \u0623\u0648 \u0623\u064a \u0627\u0633\u062a\u0641\u0633\u0627\u0631\u060c \u0641\u0642\u0637 \u0623\u062e\u0628\u0631\u0646\u064a.",
+        "extracted_info": {}
+      },
+      {
+        "timestamp": "2025-06-25T00:52:10.977816",
+        "user_text": "\uc2e0\uaddc",
+        "assistant_text": "\uc548\ub155\ud558\uc138\uc694! \uc2e0\uaddc \uc608\uc57d\uc774\ub098 \ubb38\uc758\uac00 \uc788\uc73c\uc2e0\uac00\uc694? \ub3c4\uc640\ub4dc\ub9b4 \ubd80\ubd84\uc774 \uc788\uc73c\uba74 \ud3b8\ud558\uac8c \ub9d0\uc500\ud574 \uc8fc\uc138\uc694!",
+        "extracted_info": {}
+      }
+    ],
+    "20250625_131453": [
+      {
+        "timestamp": "2025-06-25T13:15:16.792871",
+        "user_text": "Thank you. Bye. Bye. Bye. ",
+        "assistant_text": "You're very welcome! Take care and have a great day! Bye!",
+        "extracted_info": {}
+      }
+    ],
+    "20250625_132242": [
+      {
+        "timestamp": "2025-06-25T13:24:27.043568",
+        "user_text": "Hello, can I get your name, please? Hello, can I get your name, please? Hello? Hello, can I get your name, please? Hello, can I get your name, please?",
+        "assistant_text": "Hi there! I'm your friendly receptionist assistant. How can I help you today?",
+        "extracted_info": {}
+      }
+    ],
+    "20250625_133129": [
+      {
+        "timestamp": "2025-06-25T13:32:25.107216",
+        "user_text": "Bye-bye.",
+        "assistant_text": "Goodbye! Have a wonderful day, and feel free to reach out anytime you need assistance! Take care!",
+        "extracted_info": {}
+      }
+    ],
+    "20250625_133523": [
+      {
+        "timestamp": "2025-06-25T13:36:43.995071",
+        "user_text": "Okay, I can turn it down a bit.",
+        "assistant_text": "That sounds good! Just let me know if you need any help with it or anything else. I'm here for you!",
+        "extracted_info": {}
+      }
+    ],
+    "20250625_133657": [
+      {
+        "timestamp": "2025-06-25T13:38:25.000852",
+        "user_text": "Thank you.",
+        "assistant_text": "You're very welcome! If you need anything else or have any questions, just let me know. I'm here to help!",
+        "extracted_info": {}
+      }
+    ],
+    "20250625_135201": [
+      {
+        "timestamp": "2025-06-25T13:53:48.974991",
+        "user_text": "Undertitled by Brother",
+        "assistant_text": "Hi! Are you asking about the movie \"Undertitled\" by Brother, or do you mean something else? Just want to make sure I got you right so I can help!",
+        "extracted_info": {}
+      }
+    ],
+    "20250625_135908": [
+      {
+        "timestamp": "2025-06-25T14:01:44.026490",
+        "user_text": "You can turn the link off now.",
+        "assistant_text": "Sure thing! I've turned the link off for you. Is there anything else you'd like me to help with?",
+        "extracted_info": {}
+      }
+    ],
+    "20250625_140547": [
+      {
+        "timestamp": "2025-06-25T14:06:45.726903",
+        "user_text": "Thank you.",
+        "assistant_text": "You\u2019re very welcome! If there\u2019s anything else you need or any questions, just let me know. I\u2019m here to help!",
+        "extracted_info": {}
+      }
+    ],
+    "20250625_141422": [
+      {
+        "timestamp": "2025-06-25T14:16:30.680914",
+        "user_text": "Hello, can I get your name please? Hello? Hello, hello?",
+        "assistant_text": "Hi there! Sorry for the wait. I\u2019m Alex, your friendly receptionist. How can I help you today?",
+        "extracted_info": {}
+      },
+      {
+        "timestamp": "2025-06-25T14:16:31.633769",
+        "user_text": "you",
+        "assistant_text": "Hi there! I'm your virtual receptionist, here to help you out. How can I assist you today?",
+        "extracted_info": {}
+      }
     ]
   }
 }

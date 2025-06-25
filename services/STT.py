@@ -20,7 +20,8 @@ class SpeechToText:
                 print("[STT] Audio file opened, sending to OpenAI Whisper API...")
                 # transcript = openai.Audio.transcribe("whisper-1", audio_file)
                 transcript = openai.audio.transcriptions.create(
-                    model="gpt-4o-transcribe",
+                    # model="gpt-4o-transcribe",
+                    model="whisper-1",
                     file=audio_file,
                 )
                 print(f"[STT] Raw transcript response: {transcript}")
