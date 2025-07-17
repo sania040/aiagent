@@ -1,0 +1,1 @@
+Agent: Hello! This is your real estate appointment assistant. I'm here to help you schedule a property viewing. May I know your name and what kind of property you're interested in?

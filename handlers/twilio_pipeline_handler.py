@@ -1,333 +1,299 @@
-import json, base64, wave, audioop
-import asyncio
-import tempfile
 import os
-from fastapi import WebSocket
-from starlette.websockets import WebSocketDisconnect
-from services.STT import SpeechToText
-from services.TextGen import TextGenerator
-from services.TTS import TextToSpeech
-from services.ConversationExtractor import ConversationExtractor
-from agent.send_audio_to_twilio import send_audio_to_twilio
-from collections import deque
+import json
+import base64
+import asyncio
 import time
+import logging
+from fastapi import WebSocket
+from services.STT import SpeechToText
+from services.TTS import TextToSpeech
+from agent.send_audio_to_twilio import send_audio_to_twilio
+from langchain_agent import run_agent
+from services.GoogleCalendar import GoogleCalendarService
+import audioop # <-- ADD THIS IMPORT
+from pydub import AudioSegment # <-- ADD THIS IMPORT (needed for WAV header)
+from pydub.utils import ratio_to_db # <-- ADD THIS IMPORT (needed for WAV header)
 
-SAMPLE_WIDTH = 2  # 16-bit PCM
-SAMPLE_RATE = 8000
-CHANNELS = 1
-MIN_AUDIO_LENGTH = 8000  # About 0.5 seconds at 8kHz
 
-# Voice activity detection settings
-VAD_WINDOW = 10  # Number of frames to check for voice activity
-VAD_ENERGY_THRESHOLD = 200  # Energy threshold for voice activity
-MAX_SILENCE_DURATION = 1.5  # Process after 1.5 seconds of silence
-MIN_SPEECH_DURATION = 1.0  # Minimum speech duration before processing
+# Set up logging (ensure this doesn't duplicate handlers if main.py sets it up)
+# logging.basicConfig(
+#     level=logging.INFO,
+#     format="%(asctime)s [%(levelname)s] %(message)s",
+#     handlers=[logging.StreamHandler()]
+# )
+logger = logging.getLogger(__name__)
 
+# Constants (might be redundant if defined elsewhere, but safe here)
+SAMPLE_WIDTH = 2  # 16-bit PCM # <-- Define constants needed here
+SAMPLE_RATE = 8000 # <-- Define constants needed here
+# MIN_AUDIO_LENGTH = 8000  # About 0.5 seconds at 8kHz # This constant is defined later, keep it there
+
+# Initialize services
+# Ensure these classes are correctly implemented in their respective files
 stt = SpeechToText()
-textgen = TextGenerator()
 tts = TextToSpeech()
-extractor = ConversationExtractor()
+calendar_service = GoogleCalendarService()
 
-def websocket_is_open(ws: WebSocket) -> bool:
-    return ws.application_state.name == "CONNECTED" and ws.client_state.name == "CONNECTED"
-
-def calculate_energy(pcm_data):
-    """Calculate audio energy (loudness)"""
-    if not pcm_data:
-        return 0
-    # Use audioop to calculate RMS (root mean square) of the audio chunk
-    return audioop.rms(pcm_data, SAMPLE_WIDTH)
-
-class SmartVoiceCollector:
-    """Smart voice activity detector and collector"""
-    
-    def __init__(self):
-        self.pcm_frames = bytearray()
-        self.energy_window = deque(maxlen=VAD_WINDOW)
-        self.speech_detected = False
-        self.speech_start_time = 0
-        self.last_speech_time = 0
-        self.silence_streak = 0
-        self.speech_frames = 0
-        self.stream_started = False
-        
-    def process_audio_chunk(self, chunk):
-        """Process an audio chunk and detect speech/silence"""
-        if not chunk:
-            self.silence_streak += 1
-            return
-            
-        # Add chunk to collected frames
-        self.pcm_frames.extend(chunk)
-        
-        # Calculate energy and update window
-        energy = calculate_energy(chunk)
-        self.energy_window.append(energy)
-        
-        # Detect speech activity
-        avg_energy = sum(self.energy_window) / len(self.energy_window) if self.energy_window else 0
-        is_speech = avg_energy > VAD_ENERGY_THRESHOLD
-        
-        if is_speech:
-            if not self.speech_detected:
-                self.speech_detected = True
-                self.speech_start_time = time.time()
-                print("[VAD] 🎙️ Speech detected!")
-            
-            self.last_speech_time = time.time()
-            self.silence_streak = 0
-            self.speech_frames += 1
-        else:
-            self.silence_streak += 1
-            
-    def should_process(self):
-        """Determine if we should process the collected audio"""
-        # No speech detected at all
-        if not self.speech_detected:
-            return False
-            
-        # Calculate silence duration since last speech
-        silence_duration = time.time() - self.last_speech_time if self.last_speech_time else 0
-        speech_duration = self.last_speech_time - self.speech_start_time if self.speech_start_time else 0
-        
-        # If we have a significant silence after meaningful speech, process it
-        if silence_duration > MAX_SILENCE_DURATION and speech_duration > MIN_SPEECH_DURATION:
-            print(f"[VAD] ✅ Processing: {speech_duration:.1f}s speech + {silence_duration:.1f}s silence")
-            return True
-            
-        # If we have lots of speech frames, process anyway (long monologue)
-        if self.speech_frames > 800:  # ~10 seconds of continuous speech
-            print(f"[VAD] ⏱️ Long speech detected ({self.speech_frames} frames)")
-            return True
-            
-        return False
-        
-    def reset(self):
-        """Reset state but keep the PCM frames"""
-        self.speech_detected = False
-        self.speech_start_time = 0
-        self.last_speech_time = 0
-        self.silence_streak = 0
-        self.speech_frames = 0
-
-async def collect_speech_smartly(ws):
-    """Collect speech with smart voice activity detection"""
-    collector = SmartVoiceCollector()
-    max_wait_time = 10.0  # Maximum wait time without any activity
-    last_activity_time = time.time()
-    data_received = False
-    
-    try:
-        while websocket_is_open(ws):
-            # Create a task to get the next message with a short timeout
-            try:
-                msg = await asyncio.wait_for(ws.receive_text(), timeout=0.5)
-                last_activity_time = time.time()
-                
-                try:
-                    data = json.loads(msg)
-                except json.JSONDecodeError:
-                    print("[ERROR] Invalid JSON received")
-                    continue
-                
-                if data["event"] == "start":
-                    print("[MEDIA] 🌟 Stream started")
-                    collector.stream_started = True
-                    data_received = True
-                    # Send a mark to indicate we're ready
-                    await ws.send_json({
-                        "event": "mark",
-                        "mark": {"name": "ready"}
-                    })
-                    
-                elif data["event"] == "media" and collector.stream_started:
-                    try:
-                        payload = data["media"]["payload"]
-                        if payload:
-                            mulaw_data = base64.b64decode(payload)
-                            pcm_chunk = audioop.ulaw2lin(mulaw_data, SAMPLE_WIDTH)
-                            collector.process_audio_chunk(pcm_chunk)
-                            data_received = True
-                            
-                            # Check if we should process based on voice activity
-                            if collector.should_process():
-                                # We have speech followed by silence - break to process
-                                return collector.pcm_frames, data_received, True
-                    except Exception as e:
-                        print(f"[ERROR] Failed to process audio chunk: {e}")
-                        
-                elif data["event"] == "stop":
-                    print("[MEDIA] 🛑 Stream stopped")
-                    # Process whatever we have
-                    return collector.pcm_frames, data_received, True
-                    
-                elif data["event"] == "mark":
-                    mark_name = data.get("mark", {}).get("name")
-                    print(f"[MARK] 🏷️ Received mark: {mark_name}")
-                    
-            except asyncio.TimeoutError:
-                # Check if we should process what we have
-                if collector.should_process():
-                    return collector.pcm_frames, data_received, True
-                    
-                # Check for inactivity timeout
-                if time.time() - last_activity_time > max_wait_time:
-                    print(f"[VAD] ⏰ Timeout after {max_wait_time}s of inactivity")
-                    return collector.pcm_frames, data_received, True
-                    
-            except Exception as e:
-                print(f"[ERROR] WebSocket error: {e}")
-                break
-                
-    except Exception as e:
-        print(f"[ERROR] Collection error: {e}")
-        
-    return collector.pcm_frames, data_received, True
+GREETING = (
+    "Hello! This is your real estate appointment assistant. "
+    "I'm here to help you schedule a property viewing. "
+    "May I know your name and what kind of property you're interested in?"
+)
 
 async def handle_twilio_websocket(ws: WebSocket):
+    await ws.accept()
+    logger.info("Twilio media stream connected.")
+    transcript = []
+    appointment_booked = False
+    lead_info = {
+        "name": "", "email": "", "phone": "", "address": "",
+        "date": "", "time": "", "calendar_link": ""
+    }
+
+    # 1. Greet and introduce
+    logger.info(f"Attempting to generate greeting audio: '{GREETING}'")
+    greeting_audio_path = tts.speak(GREETING)
+
+    if not greeting_audio_path or not os.path.exists(greeting_audio_path) or os.path.getsize(greeting_audio_path) == 0:
+        logger.error(f"TTS failed to generate greeting audio or file is empty: {greeting_audio_path}")
+        # Send a fallback message or close the connection gracefully
+        fallback_msg = "Sorry, I'm having trouble with my voice. Please try again later."
+        fallback_audio_path = tts.speak(fallback_msg)
+        if fallback_audio_path and os.path.exists(fallback_audio_path) and os.path.getsize(fallback_audio_path) > 0:
+             await send_audio_to_twilio(ws, fallback_audio_path)
+        await ws.close(code=1011) # Internal Error
+        return # Stop processing this call
+    else:
+        logger.info(f"Greeting audio generated successfully at: {greeting_audio_path}")
+        logger.info(f"File size: {os.path.getsize(greeting_audio_path)} bytes")
+
+    logger.info("Sending greeting audio to Twilio...")
+    await send_audio_to_twilio(ws, greeting_audio_path)
+    logger.info("Greeting audio sent.")
+    transcript.append(f"Agent: {GREETING}")
+
+    # Define minimum audio length for transcription (e.g., 0.5 seconds * 8000 samples/sec * 2 bytes/sample)
+    MIN_AUDIO_LENGTH_BYTES = 8000 # This constant was already here, good.
+
     try:
-        await ws.accept()
-        print("[WEBSOCKET] 🔌 Connected to Twilio media stream...")
+        while not appointment_booked:
+            # 2. Receive user speech robustly (wait up to 30 seconds for input)
+            audio_buffer = bytearray()
+            stop_received = False
+            timeout_counter = 0
+            logger.info("Waiting for user audio...")
 
-        # Keep conversation going until disconnect
-        conversation_active = True
-        
-        while conversation_active and websocket_is_open(ws):
-            temp_audio_file = None
+            # Loop to collect audio chunks
+            while not stop_received:
+                try:
+                    # Wait for a message with a timeout
+                    msg = await asyncio.wait_for(ws.receive_json(), timeout=2.0) # Wait 2 seconds per chunk
 
+                    if msg.get("event") == "media":
+                        payload = msg["media"]["payload"]
+                        audio_data = base64.b64decode(payload)
+                        audio_buffer.extend(audio_data)
+                        timeout_counter = 0 # Reset timeout on receiving media
+                        # logger.debug(f"Received {len(audio_data)} bytes of audio. Total buffer: {len(audio_buffer)}")
+
+                        # Process audio if buffer is large enough (e.g., 2 seconds of audio)
+                        # Twilio streams ulaw 8kHz 1-channel. 2 seconds is 2 * 8000 * 1 = 16000 bytes
+                        if len(audio_buffer) >= 16000:
+                             logger.info(f"Collected {len(audio_buffer)} bytes of audio. Processing...")
+                             break # Exit inner loop to process audio
+
+                    elif msg.get("event") == "stop":
+                        logger.info("Stream stopped by Twilio.")
+                        stop_received = True
+                        break
+                    elif msg.get("event") == "start":
+                         logger.info("Received start event during conversation loop.")
+                    elif msg.get("event") == "mark":
+                         logger.info(f"Received mark event: {msg.get('mark')}")
+
+                except asyncio.TimeoutError:
+                    timeout_counter += 1
+                    logger.debug(f"Timeout waiting for media. Counter: {timeout_counter}")
+                    if timeout_counter * 2.0 > 30.0: # Wait up to 30 seconds for user input
+                        logger.info("No user audio received within timeout, ending call.")
+                        stop_received = True
+                        break
+                except Exception as e:
+                    logger.error(f"Error receiving message from WebSocket: {e}", exc_info=True) # Log exception details
+                    stop_received = True
+                    break # Exit inner loop on error
+
+            if stop_received:
+                 logger.info("Stopping conversation loop due to stop event or error.")
+                 break # Exit main conversation loop
+
+            if not audio_buffer or len(audio_buffer) < MIN_AUDIO_LENGTH_BYTES:
+                logger.info(f"Audio buffer too short ({len(audio_buffer)} bytes), waiting for more speech or ending.")
+                # If we timed out or got a stop with insufficient audio, break
+                if timeout_counter * 2.0 > 30.0 or stop_received:
+                     break
+                continue # Otherwise, continue waiting for more audio
+
+            # 3. Transcribe user input
+            # Twilio streams ulaw 8kHz 1-channel. Need to convert to 16-bit PCM for Whisper STT.
             try:
-                with tempfile.NamedTemporaryFile(suffix=".wav", delete=False) as tmp_file:
-                    temp_audio_file = tmp_file.name
-                    print(f"[AUDIO] 📁 Using temporary file: {temp_audio_file}")
+                # Convert ulaw to 16-bit linear PCM
+                # Ensure audioop is imported at the top
+                pcm_audio_data = audioop.ulaw2lin(audio_buffer, SAMPLE_WIDTH)
 
-                # Collect audio with smart voice detection
-                pcm_frames, data_received, should_continue = await collect_speech_smartly(ws)
-                
-                if not should_continue:
-                    conversation_active = False
-                    break
-                
-                if not data_received:
-                    print("[WEBSOCKET] No data received, ending conversation")
-                    conversation_active = False
+                # Save PCM to WAV for STT
+                wav_path = "temp_input.wav"
+                # Need to add WAV header to the PCM data using pydub
+                # Ensure pydub and its utilities are imported at the top
+                audio_segment = AudioSegment(
+                    pcm_audio_data,
+                    sample_width=SAMPLE_WIDTH,
+                    frame_rate=SAMPLE_RATE,
+                    channels=1
+                )
+                audio_segment.export(wav_path, format="wav")
+
+                logger.info(f"Saved user audio to {wav_path} ({os.path.getsize(wav_path)} bytes)")
+
+                user_text = stt.transcribe(wav_path)
+                logger.info(f"User said: {user_text}")
+                transcript.append(f"User: {user_text}")
+
+                if not user_text.strip():
+                    reprompt = "Sorry, I didn't catch that. Could you please repeat?"
+                    reprompt_audio = tts.speak(reprompt)
+                    await send_audio_to_twilio(ws, reprompt_audio)
+                    transcript.append(f"Agent: {reprompt}")
+                    continue
+
+            except Exception as e:
+                 logger.error(f"Error during transcription: {e}", exc_info=True) # Log exception details
+                 reprompt = "Sorry, I had trouble understanding you. Could you please repeat?"
+                 reprompt_audio = tts.speak(reprompt)
+                 await send_audio_to_twilio(ws, reprompt_audio)
+                 transcript.append(f"Agent: {reprompt}")
+                 continue # Continue the loop to try again
+
+            # 4. Generate agent response and extract info
+            ai_response = run_agent(user_text)
+            logger.info(f"Agent replied: {ai_response}")
+            transcript.append(f"Agent: {ai_response}")
+
+            # 5. Check for appointment intent and extract details
+            # Expecting LangChain agent to output a JSON block with appointment info when ready
+            if "appointment confirmed" in ai_response.lower() or "appointment booked" in ai_response.lower():
+                logger.info("Appointment booking intent detected.")
+                # Try to extract info from the response (assume JSON block at end)
+                try:
+                    start = ai_response.index("{")
+                    end = ai_response.rindex("}") + 1
+                    info_json = ai_response[start:end]
+                    # Use json.loads if your agent outputs strict JSON, eval is risky
+                    info = json.loads(info_json)
+                    lead_info.update(info)
+                    logger.info(f"Extracted lead info: {lead_info}")
+                except Exception as e:
+                    logger.warning(f"Could not extract appointment info from agent response: {e}", exc_info=True) # Log exception details
+                    # Fallback: Ask the user for details if extraction failed
+                    fallback_ask = "Could you please confirm your name, email, phone number, address, and preferred appointment time?"
+                    fallback_audio = tts.speak(fallback_ask)
+                    await send_audio_to_twilio(ws, fallback_audio)
+                    transcript.append(f"Agent: {fallback_ask}")
+                    continue # Continue the loop to get details
+
+                # Book appointment
+                try:
+                    # Basic validation before booking
+                    if not all([lead_info.get('name'), lead_info.get('email'), lead_info.get('date'), lead_info.get('time')]):
+                         logger.warning("Missing required info for booking.")
+                         missing_info_msg = "I seem to be missing some details like your name, email, date, or time. Could you please provide them?"
+                         missing_info_audio = tts.speak(missing_info_msg)
+                         await send_audio_to_twilio(ws, missing_info_audio)
+                         transcript.append(f"Agent: {missing_info_msg}")
+                         continue # Continue the loop to get missing info
+
+                    summary = f"Viewing with {lead_info.get('name', 'Lead')}"
+                    description = f"Phone: {lead_info.get('phone', 'N/A')}\nAddress: {lead_info.get('address', 'N/A')}"
+                    # Ensure date and time are in correct format (YYYY-MM-DDTHH:MM:SS)
+                    # You might need more robust date/time parsing here
+                    start_time_str = info.get('date') + 'T' + info.get('time') + ':00' # Example format
+                    # Calculate end time (e.g., +30 mins)
+                    from datetime import datetime, timedelta
+                    try:
+                        start_dt = datetime.strptime(start_time_str, "%Y-%m-%dT%H:%M:%S")
+                        end_dt = start_dt + timedelta(minutes=30)
+                        end_time_str = end_dt.strftime("%Y-%m-%dT%H:%M:%S")
+                    except ValueError:
+                        logger.error(f"Could not parse date/time format: {start_time_str}. Using simple string concatenation.", exc_info=True) # Log exception details
+                        end_time_str = f"{info.get('date')}T{info.get('time')}:30" # Fallback (less reliable)
+
+                    attendees = [info.get('email')]
+
+                    logger.info(f"Attempting to book appointment: Summary='{summary}', Start='{start_time_str}', End='{end_time_str}', Attendees='{[lead_info.get('email')]}'")
+
+                    link = calendar_service.create_appointment(
+                        summary, description, start_time_str, end_time_str, attendees
+                    )
+                    lead_info["calendar_link"] = link
+                    logger.info(f"Appointment booked successfully. Link: {link}")
+
+                    closing = (
+                        f"Your appointment is booked! You'll receive a confirmation at {lead_info.get('email', 'your email')}. "
+                        "Thank you for your time. Goodbye!"
+                    )
+                    closing_audio = tts.speak(closing)
+                    await send_audio_to_twilio(ws, closing_audio)
+                    transcript.append(f"Agent: {closing}")
+                    appointment_booked = True # Exit loop after booking
+                    break # Ensure loop breaks
+
+                except Exception as e:
+                    logger.error(f"Failed to book appointment: {e}", exc_info=True) # Log exception details
+                    error_msg = "Sorry, I was unable to book your appointment. Please try again later."
+                    error_audio = tts.speak(error_msg)
+                    await send_audio_to_twilio(ws, error_audio)
+                    transcript.append(f"Agent: {error_msg}")
+                    # Decide whether to break or continue the conversation after booking failure
+                    # For now, let's break to avoid infinite loop on booking error
                     break
 
-                # Process the collected audio
-                if pcm_frames and len(pcm_frames) >= MIN_AUDIO_LENGTH and websocket_is_open(ws):
-                    # Save audio to file
-                    try:
-                        with wave.open(temp_audio_file, "wb") as wf:
-                            wf.setnchannels(CHANNELS)
-                            wf.setsampwidth(SAMPLE_WIDTH)
-                            wf.setframerate(SAMPLE_RATE)
-                            wf.writeframes(pcm_frames)
-                        
-                        print(f"[AUDIO] 💾 Saved {len(pcm_frames)} bytes ({len(pcm_frames)/SAMPLE_RATE/SAMPLE_WIDTH:.1f}s audio)")
-                        
-                        # Process audio through the pipeline with error handling
-                        try:
-                            print("[STT] 🔊 Starting transcription...")
-                            transcript = await asyncio.wait_for(
-                                asyncio.to_thread(stt.transcribe_audio, temp_audio_file), 
-                                timeout=15.0
-                            )
-                            
-                            if transcript and transcript.strip():
-                                print(f"[TRANSCRIPT] 📝 Received: {transcript}")
-                                
-                                print("[TEXTGEN] 🧠 Generating response...")
-                                response = await asyncio.wait_for(
-                                    asyncio.to_thread(textgen.generate_response, transcript),
-                                    timeout=10.0
-                                )
-                                print(f"[RESPONSE] 💬 Generated: {response}")
-                                
-                                # Extract information (non-blocking)
-                                asyncio.create_task(
-                                    asyncio.to_thread(extractor.extract_information, transcript, response)
-                                )
-                                
-                                # Generate and send speech response
-                                if websocket_is_open(ws):
-                                    print("[TTS] 🗣️ Generating speech...")
-                                    speech_path = await asyncio.wait_for(
-                                        asyncio.to_thread(tts.generate_speech, response, voice="nova"),
-                                        timeout=15.0
-                                    )
-                                    
-                                    if speech_path and os.path.exists(speech_path):
-                                        print(f"[TTS] 🔉 Generated speech file: {speech_path}")
-                                        
-                                        # Send mark before audio
-                                        await ws.send_json({
-                                            "event": "mark",
-                                            "mark": {"name": "startResponse"}
-                                        })
-                                        
-                                        await send_audio_to_twilio(ws, speech_path)
-                                        
-                                        # Send mark after audio
-                                        await ws.send_json({
-                                            "event": "mark", 
-                                            "mark": {"name": "endResponse"}
-                                        })
-                                        
-                                        print("[CONVERSATION] 🔄 Audio sent, waiting for next input...")
-                                        
-                                        # Clean up speech file
-                                        try:
-                                            os.remove(speech_path)
-                                        except:
-                                            pass
-                                    else:
-                                        print("[TTS] ❌ Failed to generate speech file")
-                                        # Send a fallback text response
-                                        await ws.send_json({
-                                            "event": "mark",
-                                            "mark": {"name": "error", "data": "Could not generate audio response"}
-                                        })
-                                else:
-                                    print("[WEBSOCKET] Connection lost, skipping audio response")
-                                    conversation_active = False
-                            else:
-                                print("[STT] ⚠️ No transcript or empty transcript received")
-                                
-                        except asyncio.TimeoutError:
-                            print("[ERROR] ⏱️ Processing timeout - skipping this audio chunk")
-                        except Exception as process_err:
-                            print(f"[ERROR] ❌ Audio processing failed: {process_err}")
-                            
-                    except Exception as audio_err:
-                        print(f"[ERROR] ❌ Audio file creation failed: {audio_err}")
-                        
-                elif not websocket_is_open(ws):
-                    print("[WEBSOCKET] Connection lost, ending conversation")
-                    conversation_active = False
-                else:
-                    print(f"[AUDIO] ⚠️ Insufficient audio data: {len(pcm_frames)} bytes")
-                
-            except Exception as loop_err:
-                print(f"[ERROR] ❌ Error in conversation loop: {loop_err}")
-                conversation_active = False
-                
-            finally:
-                # Clean up temp file
-                if temp_audio_file and os.path.exists(temp_audio_file):
-                    try:
-                        os.remove(temp_audio_file)
-                    except:
-                        pass
-                
-    except WebSocketDisconnect:
-        print("[WEBSOCKET] Client disconnected gracefully")
+
+            # 6. Speak agent response (if not booking)
+            else:
+                response_audio = tts.speak(ai_response)
+                await send_audio_to_twilio(ws, response_audio)
+
     except Exception as e:
-        import traceback
-        print(f"[WEBSOCKET ERROR] {e}")
-        traceback.print_exc()
+        logger.error(f"WebSocket error during conversation: {e}", exc_info=True) # Log exception details
+
     finally:
-        print("[WEBSOCKET] 🔌 Cleaning up and closing connection")
+        logger.info("Call ended. Saving transcript and lead info.")
+        # Save transcript and lead info
+        ts = int(time.time())
         try:
-            if websocket_is_open(ws):
-                await ws.close()
-        except:
-            pass
+            with open(f"call_transcript_{ts}.txt", "w", encoding="utf-8") as f:
+                for line in transcript:
+                    f.write(line + "\n")
+            logger.info(f"Transcript saved to call_transcript_{ts}.txt")
+        except Exception as e:
+            logger.error(f"Failed to save transcript: {e}", exc_info=True) # Log exception details
+
+        try:
+            with open(f"lead_info_{ts}.json", "w", encoding="utf-8") as f:
+                json.dump(lead_info, f, indent=2)
+            logger.info(f"Lead info saved to lead_info_{ts}.json")
+        except Exception as e:
+            logger.error(f"Failed to save lead info: {e}", exc_info=True) # Log exception details
+
+        logger.info("Full call transcript:")
+        for line in transcript:
+            logger.info(line)
+        logger.info(f"Final Lead info: {lead_info}")
+
+        # Ensure WebSocket is closed
+        if ws.application_state.name == "CONNECTED" or ws.client_state.name == "CONNECTED":
+             try:
+                 await ws.close()
+                 logger.info("WebSocket closed.")
+             except Exception as e:
+                 logger.error(f"Error closing WebSocket: {e}", exc_info=True) # Log exception details

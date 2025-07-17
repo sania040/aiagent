@@ -1,0 +1,7 @@
+Agent: Hello! This is your real estate appointment assistant. I'm here to help you schedule a property viewing. May I know your name and what kind of property you're interested in?
+User: 
+Agent: Sorry, I didn't catch that. Could you please repeat?
+User: 0, 2, 9.
+Agent: Hello! I'm here to help you book a real estate appointment. Could you please tell me your name and what kind of property you are interested in viewing?
+User: One, two, three, four.
+Agent: Hello! I'm here to help you book a real estate appointment. Could you please tell me your name and what kind of property you are interested in viewing?

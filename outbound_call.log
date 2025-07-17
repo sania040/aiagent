@@ -1,0 +1,52 @@
+2025-06-30 14:19:38,433 [INFO] Starting outbound call...
+2025-06-30 14:19:38,583 [INFO] -- BEGIN Twilio API Request --
+2025-06-30 14:19:38,583 [INFO] POST Request: https://api.twilio.com/2010-04-01/Accounts/AC6f7141ab32f73db7648981e03c905442/Calls.json
+2025-06-30 14:19:38,583 [INFO] Headers:
+2025-06-30 14:19:38,584 [INFO] Content-Type : application/x-www-form-urlencoded
+2025-06-30 14:19:38,584 [INFO] Accept : application/json
+2025-06-30 14:19:38,584 [INFO] User-Agent : twilio-python/9.6.3 (Windows AMD64) Python/3.9.13
+2025-06-30 14:19:38,584 [INFO] X-Twilio-Client : python-9.6.3
+2025-06-30 14:19:38,584 [INFO] Accept-Charset : utf-8
+2025-06-30 14:19:38,585 [INFO] -- END Twilio API Request --
+2025-06-30 14:19:39,548 [INFO] Response Status Code: 400
+2025-06-30 14:19:39,549 [INFO] Response Headers: {'Content-Type': 'application/json', 'Content-Length': '122', 'Connection': 'keep-alive', 'Date': 'Mon, 30 Jun 2025 09:19:39 GMT', 'X-Twilio-Error-Code': '21201', 'Twilio-Concurrent-Requests': '1', 'Twilio-Request-Id': 'RQd6e2baa4cdc55981f7ad9ded6b0b49a2', 'Twilio-Request-Duration': '0.030', 'X-Home-Region': 'us1', 'X-API-Domain': 'api.twilio.com', 'Strict-Transport-Security': 'max-age=31536000', 'X-Cache': 'Error from cloudfront', 'Via': '1.1 0b0f3b1fb37b18ec30e4ba09089b217c.cloudfront.net (CloudFront)', 'X-Amz-Cf-Pop': 'DXB52-P2', 'X-Amz-Cf-Id': 'HWy8BjziYTgLbUwMmH3Vvml7wmcShSber5zwTV_oEBRdg3Y7CFHqNg==', 'X-Powered-By': 'AT-5000', 'X-Shenanigans': 'none', 'Vary': 'Origin'}
+2025-06-30 14:19:39,551 [ERROR] Failed to initiate call: 
+[31m[49mHTTP Error[0m [37m[49mYour request was:[0m
+
+[36m[49mPOST /Accounts/AC6f7141ab32f73db7648981e03c905442/Calls.json[0m
+
+[37m[49mTwilio returned the following information:[0m
+
+[34m[49mUnable to create record: No 'To' number is specified[0m
+
+[37m[49mMore information may be available here:[0m
+
+[34m[49mhttps://www.twilio.com/docs/errors/21201[0m
+
+
+2025-06-30 14:21:02,388 [INFO] Starting outbound call...
+2025-06-30 14:21:02,475 [INFO] -- BEGIN Twilio API Request --
+2025-06-30 14:21:02,477 [INFO] POST Request: https://api.twilio.com/2010-04-01/Accounts/AC6f7141ab32f73db7648981e03c905442/Calls.json
+2025-06-30 14:21:02,477 [INFO] Headers:
+2025-06-30 14:21:02,477 [INFO] Content-Type : application/x-www-form-urlencoded
+2025-06-30 14:21:02,477 [INFO] Accept : application/json
+2025-06-30 14:21:02,477 [INFO] User-Agent : twilio-python/9.6.3 (Windows AMD64) Python/3.9.13
+2025-06-30 14:21:02,477 [INFO] X-Twilio-Client : python-9.6.3
+2025-06-30 14:21:02,477 [INFO] Accept-Charset : utf-8
+2025-06-30 14:21:02,477 [INFO] -- END Twilio API Request --
+2025-06-30 14:21:03,302 [INFO] Response Status Code: 201
+2025-06-30 14:21:03,303 [INFO] Response Headers: {'Content-Type': 'application/json;charset=utf-8', 'Content-Length': '2011', 'Connection': 'keep-alive', 'Date': 'Mon, 30 Jun 2025 09:21:03 GMT', 'Location': 'https://call-service.us1.svc.twilio.com/v2/Accounts/CA64c1e916ed4f77db54d84fbc9dc01e3c', 'Twilio-Concurrent-Requests': '1', 'Twilio-Request-Id': 'RQ4ee71020d866e6916146ad8132322a32', 'Twilio-Request-Duration': '0.082', 'X-Home-Region': 'us1', 'X-API-Domain': 'api.twilio.com', 'Strict-Transport-Security': 'max-age=31536000', 'X-Cache': 'Miss from cloudfront', 'Via': '1.1 9ed189e1561f6595b76645ea1fff18f8.cloudfront.net (CloudFront)', 'X-Amz-Cf-Pop': 'DXB52-P2', 'X-Amz-Cf-Id': '5Pbb1LwiDHpmOdrxxw_Hsclgvie_30r_ov_Nw5lvSkWIlcb3Ojj-ag==', 'X-Powered-By': 'AT-5000', 'X-Shenanigans': 'none', 'Vary': 'Origin'}
+2025-06-30 14:21:03,304 [INFO] Call initiated. SID: CA64c1e916ed4f77db54d84fbc9dc01e3c
+2025-06-30 14:25:07,771 [INFO] Starting outbound call...
+2025-06-30 14:25:07,869 [INFO] -- BEGIN Twilio API Request --
+2025-06-30 14:25:07,869 [INFO] POST Request: https://api.twilio.com/2010-04-01/Accounts/AC6f7141ab32f73db7648981e03c905442/Calls.json
+2025-06-30 14:25:07,869 [INFO] Headers:
+2025-06-30 14:25:07,870 [INFO] Content-Type : application/x-www-form-urlencoded
+2025-06-30 14:25:07,870 [INFO] Accept : application/json
+2025-06-30 14:25:07,870 [INFO] User-Agent : twilio-python/9.6.3 (Windows AMD64) Python/3.9.13
+2025-06-30 14:25:07,870 [INFO] X-Twilio-Client : python-9.6.3
+2025-06-30 14:25:07,870 [INFO] Accept-Charset : utf-8
+2025-06-30 14:25:07,870 [INFO] -- END Twilio API Request --
+2025-06-30 14:25:08,695 [INFO] Response Status Code: 201
+2025-06-30 14:25:08,696 [INFO] Response Headers: {'Content-Type': 'application/json;charset=utf-8', 'Content-Length': '2011', 'Connection': 'keep-alive', 'Date': 'Mon, 30 Jun 2025 09:25:08 GMT', 'Location': 'https://call-service.us1.svc.twilio.com/v2/Accounts/CAd19603e53e4ff0420a4544e17d405cd0', 'Twilio-Concurrent-Requests': '1', 'Twilio-Request-Id': 'RQ2b9c2933d227f0a512f9478bddb8abe8', 'Twilio-Request-Duration': '0.085', 'X-Home-Region': 'us1', 'X-API-Domain': 'api.twilio.com', 'Strict-Transport-Security': 'max-age=31536000', 'X-Cache': 'Miss from cloudfront', 'Via': '1.1 ed52cee2472a0e307b3d91a06f61c730.cloudfront.net (CloudFront)', 'X-Amz-Cf-Pop': 'DXB52-P2', 'X-Amz-Cf-Id': 'AKf-a8lXTSYzsZKlizEpJolAGEjRgl4rZKo-HqD_LW8ixIlbIYTfbQ==', 'X-Powered-By': 'AT-5000', 'X-Shenanigans': 'none', 'Vary': 'Origin'}
+2025-06-30 14:25:08,696 [INFO] Call initiated. SID: CAd19603e53e4ff0420a4544e17d405cd0

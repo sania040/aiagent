@@ -1,0 +1,5 @@
+Agent: Hello! This is your real estate appointment assistant. I'm here to help you schedule a property viewing. May I know your name and what kind of property you're interested in?
+User: Thank you.
+Agent: Hello! I'm here to help you with booking a real estate appointment. Could you please tell me your name and what kind of property you are interested in viewing?
+User: you
+Agent: Hello! I'm here to help you with booking a real estate appointment. Could you please tell me your name and what kind of property you are interested in viewing?
